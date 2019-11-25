@@ -10,6 +10,7 @@ import torch
 import torch.utils.data
 from opts import opts
 from models.model import create_model, load_model, save_model
+# 未进行数据并行
 from models.data_parallel import DataParallel
 from logger import Logger
 from datasets.dataset_factory import get_dataset
@@ -19,6 +20,8 @@ from trains.train_factory import train_factory
 def main(opt):
   torch.manual_seed(opt.seed)
   torch.backends.cudnn.benchmark = not opt.not_cuda_benchmark and not opt.test
+
+  # 构造数据
   Dataset = get_dataset(opt.dataset, opt.task)
   opt = opts().update_dataset_info_and_set_heads(opt, Dataset)
   print(opt)
@@ -36,6 +39,7 @@ def main(opt):
     model, optimizer, start_epoch = load_model(
       model, opt.load_model, optimizer, opt.resume, opt.lr, opt.lr_step)
 
+  # 构造训练器
   Trainer = train_factory[opt.task]
   trainer = Trainer(opt, model, optimizer)
   trainer.set_device(opt.gpus, opt.chunk_sizes, opt.device)
@@ -54,6 +58,7 @@ def main(opt):
     val_loader.dataset.run_eval(preds, opt.save_dir)
     return
 
+  # 加载数据
   train_loader = torch.utils.data.DataLoader(
       Dataset(opt, 'train'), 
       batch_size=opt.batch_size, 
@@ -67,8 +72,12 @@ def main(opt):
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
     mark = epoch if opt.save_all else 'last'
+
+    # 训练
     log_dict_train, _ = trainer.train(epoch, train_loader)
+
     logger.write('epoch: {} |'.format(epoch))
+
     for k, v in log_dict_train.items():
       logger.scalar_summary('train_{}'.format(k), v, epoch)
       logger.write('{} {:8f} | '.format(k, v))

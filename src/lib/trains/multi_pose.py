@@ -13,13 +13,18 @@ from utils.post_process import multi_pose_post_process
 from utils.oracle_utils import gen_oracle_map
 from .base_trainer import BaseTrainer
 
+# 人体关键点 Loss
 class MultiPoseLoss(torch.nn.Module):
   def __init__(self, opt):
     super(MultiPoseLoss, self).__init__()
+    # Heatmap loss
     self.crit = FocalLoss()
+    #
     self.crit_hm_hp = torch.nn.MSELoss() if opt.mse_loss else FocalLoss()
+    #
     self.crit_kp = RegWeightedL1Loss() if not opt.dense_hp else \
                    torch.nn.L1Loss(reduction='sum')
+    #
     self.crit_reg = RegL1Loss() if opt.reg_loss == 'l1' else \
                     RegLoss() if opt.reg_loss == 'sl1' else None
     self.opt = opt

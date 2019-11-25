@@ -11,13 +11,14 @@ from .dataset.coco import COCO
 from .dataset.pascal import PascalVOC
 from .dataset.kitti import KITTI
 from .dataset.coco_hp import COCOHP
-
+from .dataset.megvii_logo import MEGVIILOGO
 
 dataset_factory = {
   'coco': COCO,
   'pascal': PascalVOC,
   'kitti': KITTI,
   'coco_hp': COCOHP
+  'megvii_logo': MEGVIILOGO
 }
 
 _sample_factory = {
